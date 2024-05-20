@@ -1,15 +1,16 @@
 const express = require('express');
-const { graphqlHTTP } = require('express-graphql');
+const { createHandler } = require('graphql-http/lib/use/express');
 const { buildSchema } = require('graphql');
 const speedTest = require('speedtest-net');
 const { InfluxDB, Point } = require('@influxdata/influxdb-client');
 const cron = require('node-cron');
+require('dotenv').config();
 
-const token = '45Jv5JxHqFSoOkP5HrLEU8tyCdGCulP1i85IdjbzA8lk5bPbdAxxuzmByb-CFPiUMG-VvydK2Z4REcVKbY5dvg=='; // "all-access" token
-const org = 'speedtest'; 
-const bucket = 'speedtest';
+const token = process.env.INFLUXDB_TOKEN;
+const org = process.env.INFLUXDB_ORG;
+const bucket = process.env.INFLUXDB_BUCKET;
 
-const client = new InfluxDB({ url: 'http://localhost:8086', token: token });
+const client = new InfluxDB({ url: process.env.INFLUXDB_URL, token: token });
 const queryApi = client.getQueryApi(org);
 const writeApi = client.getWriteApi(org, bucket);
 writeApi.useDefaultTags({ host: 'home' });
@@ -36,7 +37,7 @@ const root = {
   hello: () => 'Hello world!',
   getSpeedTestResults: async () => {
     const query = `from(bucket: "${bucket}")
-      |> range(start: -1h)
+      |> range(start: -24h)
       |> filter(fn: (r) => r._measurement == "network_speed")
       |> filter(fn: (r) => r._field == "download" or r._field == "upload")
       |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
@@ -49,7 +50,7 @@ const root = {
         results.push({
           time: row._time,
           download: row.download,
-          upload: row.upload
+          upload: row.upload,
         });
       });
     }).catch(err => {
@@ -60,6 +61,10 @@ const root = {
     return results;
   },
   insertSpeedTestResult: async ({ download, upload }) => {
+    if (download <= 0 || upload <= 0) {
+      throw new Error('Invalid speed test result values');
+    }
+
     const point = new Point('network_speed')
       .floatField('download', download)
       .floatField('upload', upload);
@@ -71,19 +76,19 @@ const root = {
     } catch (err) {
       console.error(`Error writing to InfluxDB! ${err.message}`);
       console.error(`Stack trace: ${err.stack}`);
-      throw new Error('Error writing to InfluxDB');
+      throw new Error(`Error writing to InfluxDB: ${err.message}`);
     }
   }
 };
 
-app.use('/graphql', graphqlHTTP({
+app.use('/graphql', createHandler({
   schema: schema,
   rootValue: root,
   graphiql: true,
 }));
 
 cron.schedule('0 * * * *', () => {
-  const test = speedTest({ acceptGdpr: true });
+  const test = speedTest({ acceptGdpr: true, acceptLicense: true });
   test.on('data', data => {
     const point = new Point('network_speed')
       .floatField('download', data.speeds.download)
