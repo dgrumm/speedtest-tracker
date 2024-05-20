@@ -1,0 +1,19 @@
+{
+  "name": "speedtest-tracker",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@influxdata/influxdb-client": "^1.33.2",
+    "express": "^4.19.2",
+    "express-graphql": "^0.12.0",
+    "graphql": "^16.8.1",
+    "node-cron": "^3.0.3",
+    "speedtest-net": "^2.2.0"
+  }
+}
