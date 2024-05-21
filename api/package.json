@@ -1,0 +1,22 @@
+{
+  "name": "speedtest-tracker-api",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "node src/index.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@graphql-yoga/node": "^3.9.1",
+    "@influxdata/influxdb-client": "^1.33.2",
+    "dotenv": "^16.4.5",
+    "graphql": "^16.8.1",
+    "node-cron": "^3.0.3",
+    "speedtest-net": "^2.2.0"
+  },
+  "engines": {
+    "node": ">=16.17.0"
+  }
+}

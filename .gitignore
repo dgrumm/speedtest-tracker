@@ -1,0 +1,26 @@
+# Node.js dependencies
+node_modules
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+
+# Logs
+logs
+*.log
+*.log.*
+
+# Environment variables
+.env
+
+# Docker
+.dockerignore
+
+# VS Code cache
+.vscode/
+
+
+
+# local caches
+.npm
+.eslintcache
+
