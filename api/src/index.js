@@ -2,7 +2,7 @@ const { createSchema, createYoga } = require('graphql-yoga');
 const { createServer } = require('http');
 const { InfluxDB, Point } = require('@influxdata/influxdb-client');
 const cron = require('node-cron');
-require('dotenv').config();
+require('dotenv').config({ path: '../.env' });
 
 const token = process.env.INFLUXDB_TOKEN;
 const org = process.env.INFLUXDB_ORG;
