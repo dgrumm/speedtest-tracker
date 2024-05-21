@@ -1,7 +1,5 @@
-const express = require('express');
-const { createHandler } = require('graphql-http/lib/use/express');
-const { buildSchema } = require('graphql');
-const speedTest = require('speedtest-net');
+const { createSchema, createYoga } = require('graphql-yoga');
+const { createServer } = require('http');
 const { InfluxDB, Point } = require('@influxdata/influxdb-client');
 const cron = require('node-cron');
 require('dotenv').config();
@@ -15,8 +13,7 @@ const queryApi = client.getQueryApi(org);
 const writeApi = client.getWriteApi(org, bucket);
 writeApi.useDefaultTags({ host: 'home' });
 
-const app = express();
-const schema = buildSchema(`
+const typeDefs = `
   type SpeedTestResult {
     time: String
     download: Float
@@ -31,61 +28,80 @@ const schema = buildSchema(`
   type Mutation {
     insertSpeedTestResult(download: Float!, upload: Float!): SpeedTestResult
   }
-`);
+`;
 
-const root = {
-  hello: () => 'Hello world!',
-  getSpeedTestResults: async () => {
-    const query = `from(bucket: "${bucket}")
-      |> range(start: -24h)
-      |> filter(fn: (r) => r._measurement == "network_speed")
-      |> filter(fn: (r) => r._field == "download" or r._field == "upload")
-      |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
-      |> sort(columns: ["_time"], desc: true)`;
+const resolvers = {
+  Query: {
+    hello: () => 'Hello world!',
+    getSpeedTestResults: async () => {
+      const query = `from(bucket: "${bucket}")
+        |> range(start: -24h)
+        |> filter(fn: (r) => r._measurement == "network_speed")
+        |> filter(fn: (r) => r._field == "download" or r._field == "upload")
+        |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
+        |> sort(columns: ["_time"], desc: true)`;
 
-    const results = [];
+      const results = [];
 
-    await queryApi.collectRows(query).then(rows => {
-      rows.forEach(row => {
-        results.push({
-          time: row._time,
-          download: row.download,
-          upload: row.upload,
+      await queryApi.collectRows(query).then(rows => {
+        rows.forEach(row => {
+          results.push({
+            time: row._time,
+            download: row.download,
+            upload: row.upload,
+          });
         });
+      }).catch(err => {
+        console.error(`Error querying InfluxDB! ${err.message}`);
+        console.error(`Stack trace: ${err.stack}`);
       });
-    }).catch(err => {
-      console.error(`Error querying InfluxDB! ${err.message}`);
-      console.error(`Stack trace: ${err.stack}`);
-    });
 
-    return results;
+      return results;
+    },
   },
-  insertSpeedTestResult: async ({ download, upload }) => {
-    if (download <= 0 || upload <= 0) {
-      throw new Error('Invalid speed test result values');
-    }
+  Mutation: {
+    insertSpeedTestResult: async (_, { download, upload }) => {
+      if (typeof download !== 'number' || typeof upload !== 'number') {
+        throw new Error('Download and upload speeds must be numbers');
+      }
 
-    const point = new Point('network_speed')
-      .floatField('download', download)
-      .floatField('upload', upload);
+      if (download <= 0 || upload <= 0) {
+        throw new Error('Download and upload speeds must be greater than zero');
+      }
 
-    try {
-      await writeApi.writePoint(point);
-      await writeApi.close();
-      return { time: new Date().toISOString(), download, upload };
-    } catch (err) {
-      console.error(`Error writing to InfluxDB! ${err.message}`);
-      console.error(`Stack trace: ${err.stack}`);
-      throw new Error(`Error writing to InfluxDB: ${err.message}`);
-    }
-  }
+      if (download > 1000 || upload > 1000) {
+        throw new Error('Download and upload speeds must be less than 1000 Mbps');
+      }
+
+      const point = new Point('network_speed')
+        .floatField('download', download)
+        .floatField('upload', upload);
+
+      try {
+        await writeApi.writePoint(point);
+        await writeApi.close();
+        return { time: new Date().toISOString(), download, upload };
+      } catch (err) {
+        console.error(`Error writing to InfluxDB! ${err.message}`);
+        console.error(`Stack trace: ${err.stack}`);
+        throw new Error(`Error writing to InfluxDB: ${err.message}`);
+      }
+    },
+  },
 };
 
-app.use('/graphql', createHandler({
-  schema: schema,
-  rootValue: root,
-  graphiql: true,
-}));
+const yoga = createYoga({
+    schema: createSchema({
+      typeDefs,
+      resolvers,
+    }),
+  });
+  
+  const server = createServer(yoga);
+  
+  server.listen(4000, () => {
+    console.log('Server is running on http://localhost:4000/graphql');
+  });
 
 cron.schedule('0 * * * *', () => {
   const test = speedTest({ acceptGdpr: true, acceptLicense: true });
@@ -110,5 +126,3 @@ cron.schedule('0 * * * *', () => {
     console.error(`Error running speed test! ${err.stack}`);
   });
 });
-
-app.listen(4000, () => console.log('Server is running on http://localhost:4000/graphql'));
