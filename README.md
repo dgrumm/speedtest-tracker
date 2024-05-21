@@ -1,6 +1,3 @@
-Sure, here is the full README markdown file with the ISC license included:
-
-```markdown
 # Speedtest Tracker
 
 Speedtest Tracker is a comprehensive application that measures and tracks internet speed over time. The project includes a Node.js backend, a React.js web frontend, a React Native iOS application, and uses InfluxDB for data storage.
@@ -109,4 +106,3 @@ THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH RE
 ## Contact
 
 TBD
-```
