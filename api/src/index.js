@@ -2,6 +2,7 @@ const { createSchema, createYoga } = require('graphql-yoga');
 const { createServer } = require('http');
 const { InfluxDB, Point } = require('@influxdata/influxdb-client');
 const cron = require('node-cron');
+const speedTest = require('speedtest-net');
 require('dotenv').config({ path: '../.env' });
 
 const token = process.env.INFLUXDB_TOKEN;
@@ -10,7 +11,9 @@ const bucket = process.env.INFLUXDB_BUCKET;
 
 const client = new InfluxDB({ url: process.env.INFLUXDB_URL, token: token });
 const queryApi = client.getQueryApi(org);
-const writeApi = client.getWriteApi(org, bucket);
+const writeApi = client.getWriteApi(org, bucket, 'ns', {
+  writeOptions: { maxRetries: 3, retryWait: 1000, requestTimeout: 60000 }
+});
 writeApi.useDefaultTags({ host: 'home' });
 
 const typeDefs = `
@@ -82,6 +85,7 @@ const resolvers = {
         .floatField('ping', ping);
 
       try {
+        console.log('Writing data to InfluxDB:', { download, upload, ping });
         await writeApi.writePoint(point);
         await writeApi.close();
         return { timestamp: new Date().toISOString(), download, upload, ping };
@@ -93,37 +97,33 @@ const resolvers = {
     },
 
     runSpeedTest: async () => {
-      const test = speedTest({ acceptGdpr: true, acceptLicense: true });
-      return new Promise((resolve, reject) => {
-        test.on('data', async data => {
-          const result = {
-            download: data.speeds.download,
-            upload: data.speeds.upload,
-            ping: data.server.ping,
-            timestamp: new Date().toISOString(),
-          };
+      try {
+        console.log('Starting speed test...');
+        const data = await speedTest({ acceptGdpr: true, acceptLicense: true });
 
-          const point = new Point('network_speed')
-            .floatField('download', result.download)
-            .floatField('upload', result.upload)
-            .floatField('ping', result.ping);
+        console.log('Speed test data:', data);
+        const result = {
+          download: data.download.bandwidth / 1e6, // Convert from bps to Mbps
+          upload: data.upload.bandwidth / 1e6, // Convert from bps to Mbps
+          ping: data.ping.latency,
+          timestamp: new Date().toISOString(),
+        };
 
-          try {
-            await writeApi.writePoint(point);
-            await writeApi.close();
-            resolve(result);
-          } catch (err) {
-            console.error(`Error writing to InfluxDB! ${err.message}`);
-            console.error(`Stack trace: ${err.stack}`);
-            reject(new Error(`Error writing to InfluxDB: ${err.message}`));
-          }
-        });
+        const point = new Point('network_speed')
+          .floatField('download', result.download)
+          .floatField('upload', result.upload)
+          .floatField('ping', result.ping);
 
-        test.on('error', err => {
-          console.error(`Error running speed test! ${err.stack}`);
-          reject(new Error(`Error running speed test: ${err.message}`));
-        });
-      });
+        console.log('Writing speed test result to InfluxDB:', result);
+        await writeApi.writePoint(point);
+        await writeApi.close();
+
+        return result;
+      } catch (err) {
+        console.error(`Error running speed test or writing to InfluxDB: ${err.message}`);
+        console.error(`Stack trace: ${err.stack}`);
+        throw new Error(`Error running speed test or writing to InfluxDB: ${err.message}`);
+      }
     },
   },
 };
@@ -141,26 +141,28 @@ server.listen(4000, () => {
   console.log('Server is running on http://localhost:4000/graphql');
 });
 
+cron.schedule('0 * * * *', async () => {
+  try {
+    console.log('Starting scheduled speed test...');
+    const data = await speedTest({ acceptGdpr: true, acceptLicense: true });
 
-cron.schedule('0 * * * *', () => {
-  const test = speedTest({ acceptGdpr: true, acceptLicense: true });
-  test.on('data', async data => {
+    console.log('Scheduled speed test data:', data);
     const point = new Point('network_speed')
-      .floatField('download', data.speeds.download)
-      .floatField('upload', data.speeds.upload)
-      .floatField('ping', data.server.ping);
+      .floatField('download', data.download.bandwidth / 1e6) // Convert from bps to Mbps
+      .floatField('upload', data.upload.bandwidth / 1e6) // Convert from bps to Mbps
+      .floatField('ping', data.ping.latency);
 
-    try {
-      await writeApi.writePoint(point);
-      await writeApi.close();
-      console.log('Scheduled speed test results saved:', data);
-    } catch (err) {
-      console.error(`Error writing to InfluxDB! ${err.message}`);
-      console.error(`Stack trace: ${err.stack}`);
-    }
-  });
+    console.log('Writing scheduled speed test result to InfluxDB:', {
+      download: data.download.bandwidth / 1e6,
+      upload: data.upload.bandwidth / 1e6,
+      ping: data.ping.latency,
+    });
 
-  test.on('error', err => {
-    console.error(`Error running scheduled speed test! ${err.stack}`);
-  });
+    await writeApi.writePoint(point);
+    await writeApi.close();
+    console.log('Scheduled speed test results saved:', data);
+  } catch (err) {
+    console.error(`Error running scheduled speed test or writing to InfluxDB: ${err.message}`);
+    console.error(`Stack trace: ${err.stack}`);
+  }
 });
