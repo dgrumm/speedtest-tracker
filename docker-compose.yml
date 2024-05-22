@@ -23,7 +23,7 @@ services:
 
   app:
     build: .
-    container_name: speedtest-tracker
+    container_name: speedtest-tracker-api
     ports:
       - "4000:4000"
     depends_on:
@@ -38,3 +38,4 @@ services:
 
 volumes:
   influxdb-data:
+  
