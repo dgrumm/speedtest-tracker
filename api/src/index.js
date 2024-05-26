@@ -8,8 +8,9 @@ require('dotenv').config({ path: '../.env' });
 const token = process.env.INFLUXDB_TOKEN;
 const org = process.env.INFLUXDB_ORG;
 const bucket = process.env.INFLUXDB_BUCKET;
+const url = process.env.INFLUXDB_URL;
 
-const client = new InfluxDB({ url: process.env.INFLUXDB_URL, token: token });
+const client = new InfluxDB({ url: url, token: token });
 const queryApi = client.getQueryApi(org);
 const writeApi = client.getWriteApi(org, bucket, 'ns', {
   writeOptions: { maxRetries: 3, retryWait: 1000, requestTimeout: 60000 }
@@ -85,7 +86,7 @@ const resolvers = {
         .floatField('ping', ping);
 
       try {
-        console.log('Writing data to InfluxDB:', { download, upload, ping });
+        console.log(`Writing data to InfluxDB at ${url}:`, { download, upload, ping });
         await writeApi.writePoint(point);
         await writeApi.close();
         return { timestamp: new Date().toISOString(), download, upload, ping };
@@ -114,7 +115,7 @@ const resolvers = {
           .floatField('upload', result.upload)
           .floatField('ping', result.ping);
 
-        console.log('Writing speed test result to InfluxDB:', result);
+        console.log(`Writing speed test result to InfluxDB at ${url}:`, result);
         await writeApi.writePoint(point);
         await writeApi.close();
 
@@ -152,7 +153,7 @@ cron.schedule('0 * * * *', async () => {
       .floatField('upload', data.upload.bandwidth / 1e6) // Convert from bps to Mbps
       .floatField('ping', data.ping.latency);
 
-    console.log('Writing scheduled speed test result to InfluxDB:', {
+    console.log(`Writing scheduled speed test result to InfluxDB at ${url}:`, {
       download: data.download.bandwidth / 1e6,
       upload: data.upload.bandwidth / 1e6,
       ping: data.ping.latency,

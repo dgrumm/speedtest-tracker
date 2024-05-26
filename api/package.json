@@ -3,11 +3,12 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "start": "node src/index.js"
+    "start": "node src/index.js",
+    "run-speedtest": "node src/run-speedtest.js"
   },
   "author": "",
-  "license": "ISC",
-  "description": "",
+  "license": "MIT",
+  "description": "Test and track your network speed over time",
   "dependencies": {
     "@graphql-yoga/node": "^3.9.1",
     "@influxdata/influxdb-client": "^1.33.2",
@@ -15,8 +16,5 @@
     "graphql": "^16.8.1",
     "node-cron": "^3.0.3",
     "speedtest-net": "^2.2.0"
-  },
-  "engines": {
-    "node": ">=16.17.0"
   }
 }
