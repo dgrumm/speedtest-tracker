@@ -6,7 +6,12 @@ const { buildSchema, execute } = require("graphql");
 const cron = require('node-cron');
 const winston = require('winston');
 const morgan = require('morgan');
-require("dotenv").config({ path: '../.env' });
+const path = require('path');
+require('dotenv').config({ path: path.resolve(__dirname, process.env.NODE_ENV === 'production' ? '../../.env.production' : '../../.env') });
+
+console.log(`Running in ${process.env.NODE_ENV} mode`);
+console.log(`InfluxDB URL: ${process.env.INFLUXDB_URL}`);
+
 
 // Logger configuration
 const logger = winston.createLogger({

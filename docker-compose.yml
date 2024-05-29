@@ -1,4 +1,4 @@
-version: '3.8'
+#version: '3.8'
 
 services:
   influxdb:
@@ -9,7 +9,7 @@ services:
     volumes:
       - influxdb-data:/var/lib/influxdb2
     env_file:
-      - .env
+      - .env.production
     environment:
       - DOCKER_INFLUXDB_INIT_MODE=setup
       - DOCKER_INFLUXDB_INIT_USERNAME=${DOCKER_INFLUXDB_INIT_USERNAME}
@@ -17,6 +17,7 @@ services:
       - DOCKER_INFLUXDB_INIT_ORG=${DOCKER_INFLUXDB_INIT_ORG}
       - DOCKER_INFLUXDB_INIT_BUCKET=${DOCKER_INFLUXDB_INIT_BUCKET}
       - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=${DOCKER_INFLUXDB_INIT_ADMIN_TOKEN}
+      - NODE_ENV=production
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8086/health"]
       interval: 1m30s
@@ -34,12 +35,8 @@ services:
       influxdb:
         condition: service_healthy
     env_file:
-      - .env
+      - .env.production
     environment:
-      - INFLUXDB_URL=${INFLUXDB_URL}
-      - INFLUXDB_TOKEN=${INFLUXDB_TOKEN}
-      - INFLUXDB_ORG=${INFLUXDB_ORG}
-      - INFLUXDB_BUCKET=${INFLUXDB_BUCKET}
       - NODE_ENV=production
 
 volumes:
