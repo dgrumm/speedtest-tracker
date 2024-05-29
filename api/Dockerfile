@@ -1,12 +1,21 @@
 FROM node:18-buster
 
 WORKDIR /app
-COPY ["package*.json", "/app"]
+
+COPY ["package*.json", "./"]
+
 RUN npm install
-COPY . /app
 
-EXPOSE 4040
+# Install Ookla Speedtest CLI
+RUN apt-get update && apt-get install -y \
+    curl \
+    gnupg2 \
+    && curl -s https://packagecloud.io/install/repositories/ookla/speedtest-cli/script.deb.sh | bash \
+    && apt-get install -y speedtest \
+    && rm -rf /var/lib/apt/lists/*
 
-#CMD ["npm", "start"]
-# command to run src/run-speedtest.js on start
-CMD ["node", "src/run-speedtest.js"]
+COPY . .
+
+EXPOSE 4000
+
+CMD ["node", "src/server.js"]

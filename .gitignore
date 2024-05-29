@@ -18,9 +18,12 @@ logs
 # VS Code cache
 .vscode/
 
-
-
 # local caches
 .npm
 .eslintcache
+.DS_Store
+
+# crufty stuff
+*temp/
+*tmp/
 
