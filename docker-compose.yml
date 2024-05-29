@@ -8,6 +8,8 @@ services:
       - "8086:8086"
     volumes:
       - influxdb-data:/var/lib/influxdb2
+    env_file:
+      - .env
     environment:
       - DOCKER_INFLUXDB_INIT_MODE=setup
       - DOCKER_INFLUXDB_INIT_USERNAME=${DOCKER_INFLUXDB_INIT_USERNAME}
@@ -21,14 +23,18 @@ services:
       timeout: 10s
       retries: 3
 
-  app:
-    build: .
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
     container_name: speedtest-tracker-api
     ports:
       - "4000:4000"
     depends_on:
       influxdb:
         condition: service_healthy
+    env_file:
+      - .env
     environment:
       - INFLUXDB_URL=${INFLUXDB_URL}
       - INFLUXDB_TOKEN=${INFLUXDB_TOKEN}

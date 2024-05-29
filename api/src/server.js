@@ -169,7 +169,7 @@ app.use('/graphql', (req, res, next) => {
   schema: schema,
   rootValue: root,
   context: ({ request }) => {
-    logger.debug(`GraphQL context called with request body: ${JSON.stringify(request.body)}`);
+    logger.debug(`GraphQL context called with request body: ${JSON.stringify(request)}`);
     return {};
   },
   execute: async (args) => {
