@@ -3,9 +3,15 @@ const express = require("express");
 const { createHandler } = require("graphql-http/lib/use/express");
 const { InfluxDB, Point } = require("@influxdata/influxdb-client");
 const { buildSchema, execute } = require("graphql");
+const cron = require('node-cron');
 const winston = require('winston');
 const morgan = require('morgan');
-require("dotenv").config({ path: '../.env' });
+const path = require('path');
+require('dotenv').config({ path: path.resolve(__dirname, process.env.NODE_ENV === 'production' ? '../../.env.production' : '../../.env') });
+
+console.log(`Running in ${process.env.NODE_ENV} mode`);
+console.log(`InfluxDB URL: ${process.env.INFLUXDB_URL}`);
+
 
 // Logger configuration
 const logger = winston.createLogger({
@@ -153,6 +159,17 @@ const root = {
     });
   }
 };
+
+// Schedule the speed test to run every hour
+cron.schedule('0 * * * *', async () => {
+    try {
+      logger.info('Running scheduled speed test...');
+      const result = await root.runSpeedTest();
+      logger.info('Scheduled speed test completed successfully:', result);
+    } catch (err) {
+      logger.error('Error running scheduled speed test:', err.message);
+    }
+  });
 
 // GraphQL endpoint
 app.use('/graphql', (req, res, next) => {
