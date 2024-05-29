@@ -1,14 +1,3 @@
-# FROM node:18-buster
-
-#WORKDIR /app
-#COPY package.json /app
-#RUN npm install
-#COPY . /app
-
-#CMD [ "/bin/sh" ]
-#CMD [ "npm", "start"]
-#CMD [ "node", "src/speed-test-cli.js" ]
-
 FROM node:18-buster
 
 WORKDIR /app
