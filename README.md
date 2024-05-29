@@ -1,6 +1,6 @@
 # Speedtest Tracker
 
-Speedtest Tracker is a comprehensive application that measures and tracks internet speed over time. The project includes a Node.js backend, a React.js web frontend, a React Native iOS application, and uses InfluxDB for data storage.
+Speedtest Tracker is a application that measures and tracks internet speed over time. The project includes a Node.js backend, a React.js web frontend, a React Native iOS application, and uses InfluxDB for data storage.
 
 ## Project Structure
 
@@ -96,7 +96,7 @@ We welcome contributions! Please follow these steps:
 ## License
 
 ```
-ISC License
+MIT License
 
 Permission to use, copy, modify, and/or distribute this software for any purpose with or without fee is hereby granted, provided that the above copyright notice and this permission notice appear in all copies.
 
