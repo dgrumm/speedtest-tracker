@@ -1,4 +1,5 @@
-const { exec } = require("child_process");
+const util = require('util');
+const exec = util.promisify(require('child_process').exec);
 const express = require("express");
 const { createHandler } = require("graphql-http/lib/use/express");
 const { InfluxDB, Point } = require("@influxdata/influxdb-client");
@@ -123,19 +124,15 @@ const root = {
     }
   },
 
-  runSpeedTest: async () => {
-    return new Promise((resolve, reject) => {
-      logger.debug('Starting speed test...');
-      exec("speedtest --accept-license --accept-gdpr --format=json", (err, stdout, stderr) => {
-        if (err) {
-          logger.error(`Speed test error: ${stderr}`);
-          return reject(new Error("Error running speed test"));
-        }
-
+  runSpeedTest: () => {
+  return new Promise((resolve, reject) => {
+    logger.debug('Starting speed test...');
+    exec("speedtest --accept-license --accept-gdpr --format=json")
+      .then(({ stdout }) => {
         logger.debug(`Speed test output: ${stdout}`);
         const result = JSON.parse(stdout);
         logger.debug('Parsed speed test result:', result);
-        
+
         const download = result.download.bandwidth / 1e6; // Convert from bps to Mbps
         const upload = result.upload.bandwidth / 1e6; // Convert from bps to Mbps
         const ping = result.ping.latency;
@@ -145,7 +142,8 @@ const root = {
           .floatField('download', download)
           .floatField('upload', upload)
           .floatField('ping', ping);
-
+        
+        // write result to InfluxDB
         logger.debug('Writing point to InfluxDB:', point);
         writeApi.writePoint(point);
         writeApi.flush().then(() => {
@@ -155,9 +153,13 @@ const root = {
           logger.error('Error flushing InfluxDB writeApi:', err.message);
           reject(new Error(`Error writing to InfluxDB: ${err.message}`));
         });
+      })
+      .catch(err => {
+        logger.error(`Speed test error: ${err.message}`);
+        reject(new Error("Error running speed test"));
       });
-    });
-  }
+  });
+},
 };
 
 // Schedule the speed test to run every hour
@@ -216,3 +218,11 @@ const gracefulShutdown = () => {
 
 process.on('SIGINT', gracefulShutdown);
 process.on('SIGTERM', gracefulShutdown);
+
+module.exports = {
+  root,
+  queryApi, 
+  writeApi,
+  logger,
+  gracefulShutdown
+};

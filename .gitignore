@@ -15,8 +15,13 @@ logs
 # Docker
 .dockerignore
 
+# Test coverage
+coverage
+.nyc_output
+
 # VS Code cache
 .vscode/
+*code-workspace
 
 # local caches
 .npm
