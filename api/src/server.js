@@ -1,6 +1,7 @@
 const util = require('util');
 const exec = util.promisify(require('child_process').exec);
 const express = require("express");
+const cors = require('cors');
 const { createHandler } = require("graphql-http/lib/use/express");
 const { InfluxDB, Point } = require("@influxdata/influxdb-client");
 const { buildSchema, execute } = require("graphql");
@@ -31,6 +32,9 @@ const logger = winston.createLogger({
 
 const app = express();
 const port = process.env.PORT || 4000;
+
+// use cors for allowing cross-origin requests
+app.use(cors());
 
 // Middleware to enable JSON parsing and CORS
 app.use(express.json()); // Use Express's built-in JSON parser
@@ -86,7 +90,7 @@ const root = {
         |> filter(fn: (r) => r._measurement == "network_speed")
         |> filter(fn: (r) => r._field == "download" or r._field == "upload" or r._field == "ping")
         |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
-        |> sort(columns: ["_time"], desc: true)`;
+        |> sort(columns: ["_time"], desc: false)`;
 
     const results = [];
 
