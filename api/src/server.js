@@ -56,7 +56,10 @@ const queryApi = client.getQueryApi(org);
 const writeApi = client.getWriteApi(org, bucket, 'ns', {
   writeOptions: { maxRetries: 3, retryWait: 1000, requestTimeout: 60000 }
 });
-writeApi.useDefaultTags({ host: 'home' });
+
+// Set the host tag based on the environment variable or default to 'home-wifi'
+const host = process.env.HOST || 'home-wifi';
+writeApi.useDefaultTags({ host: host });
 
 // GraphQL Schema
 const schema = buildSchema(`

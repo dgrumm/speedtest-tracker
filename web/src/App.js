@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, gql } from '@apollo/client';
 import SpeedTestChart from './SpeedTestChart';
 import DatePicker from 'react-datepicker';
+import { FiCalendar } from 'react-icons/fi';
 import 'react-datepicker/dist/react-datepicker.css';
 import './App.css';
 
@@ -50,13 +51,32 @@ function App() {
 
   return (
     <div className="app-container">
-      <h1>Internet Speed Test Results</h1>
-      <div>
-        <DatePicker selected={startDate} onChange={date => setStartDate(date)} /> - 
-        <DatePicker selected={endDate} onChange={date => setEndDate(date)} />
+      <header className="app-header">
+        <img src="/logo100.png" className="app-logo" alt="logo" />
+        <h1>Internet Speed Test Results</h1>
+      </header>
+      <div className="date-picker-container">
+        <label>
+          Start Date
+          <div className="date-picker">
+            <div className="date-picker-input">
+              <DatePicker selected={startDate} onChange={date => setStartDate(date)} />
+              <FiCalendar className="calendar-icon" />
+            </div>
+          </div>
+        </label>
+        <label>
+          End Date
+          <div className="date-picker">
+            <div className="date-picker-input">
+              <DatePicker selected={endDate} onChange={date => setEndDate(date)} />
+              <FiCalendar className="calendar-icon" />
+            </div>
+          </div>
+        </label>
+        <button onClick={() => runSpeedTest()}>Queue Speed Test</button>
       </div>
       <SpeedTestChart data={data.getSpeedTestResults} />
-      <button onClick={() => runSpeedTest()}>Run Speed Test</button>
     </div>
   );
 }

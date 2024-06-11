@@ -6,10 +6,10 @@ Speedtest Tracker is a application that measures and tracks internet speed over 
 
 This monorepo contains the following components:
 
-- **api**: Node.js backend application using GraphQL to interact with InfluxDB.
-- **web**: React.js web application (to be developed).
-- **mobile**: React Native iOS application (to be developed).
-- **database**: InfluxDB configurations and scripts.
+- [x] **api**: Node.js backend application using GraphQL to interact with InfluxDB.
+- [x] **web**: React.js web application (to be developed).
+- [ ] **mobile**: React Native iOS application (to be developed).
+- [ ] **database**: InfluxDB configurations and scripts.
 
 ## Getting Started
 

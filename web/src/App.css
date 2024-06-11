@@ -14,6 +14,17 @@ body {
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
 
+.app-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.app-logo {
+  height: 60px;
+  margin-right: 20px;
+}
+
 h1 {
   color: #333;
 }
@@ -31,6 +42,46 @@ button:hover {
   background-color: #0056b3;
 }
 
+.date-picker-container {
+  display: flex;
+  align-items: center;
+}
+
+.date-picker-container label {
+  display: flex;
+  flex-direction: column;
+  margin-right: 20px;
+  font-size: x-small;
+  color: #888;
+}
+
+.date-picker-container label:first-child {
+  margin-right: 10px;
+}
+
+.date-picker-container button {
+  margin-left: auto;
+}
+
+.date-picker {
+  display: flex;
+  align-items: center;
+  position: relative
+}
+
+.date-picker-input {
+  position: relative;
+  display: inline-block;
+}
+
+.calendar-icon {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
 @media (max-width: 600px) {
   .app-container {
     padding: 10px;
@@ -38,5 +89,6 @@ button:hover {
 
   button {
     width: 100%;
+    align-self: flex-end;
   }
 }
